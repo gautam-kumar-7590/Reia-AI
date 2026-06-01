@@ -22,12 +22,16 @@ def get_llm(streaming=False):
                 model=os.getenv("OLLAMA_MODEL", "qwen2.5:14b"),
                 temperature=0.3,
                 streaming=streaming,
-                timeout=120,
+                timeout=180,
             )
-            # Quick ping to verify it's alive
-            llm.invoke("ping")
-            print(f"[LLM] Using Ollama @ {ollama_url}")
-            return llm
+            # Verify connection with a lightweight check
+            import requests
+            resp = requests.get(f"{ollama_url}/api/tags", timeout=10)
+            if resp.status_code == 200:
+                print(f"[LLM] Using Ollama @ {ollama_url}")
+                return llm
+            else:
+                raise Exception(f"Ollama returned {resp.status_code}")
         except Exception as e:
             print(f"[LLM] Ollama failed ({e}) — falling back to Groq")
 
