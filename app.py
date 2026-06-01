@@ -206,13 +206,24 @@ with st.sidebar:
                         uploaded_file.seek(0)
                         fname = uploaded_file.name.lower()
                         if fname.endswith('.csv'):
-                            st.session_state.df = pd.read_csv(uploaded_file)
+                            df_loaded = None
+                            for enc in ["utf-8", "latin-1", "cp1252", "utf-8-sig"]:
+                                try:
+                                    uploaded_file.seek(0)
+                                    df_loaded = pd.read_csv(uploaded_file, encoding=enc)
+                                    break
+                                except Exception:
+                                    continue
+                            if df_loaded is None:
+                                uploaded_file.seek(0)
+                                df_loaded = pd.read_csv(uploaded_file, encoding="utf-8", errors="replace")
+                            st.session_state.df = df_loaded
                         elif fname.endswith(('.xlsx', '.xls')):
                             st.session_state.df = pd.read_excel(uploaded_file)
                         else:
                             st.session_state.df = None
                         uploaded_file.seek(0)
-                    except Exception:
+                    except Exception as df_err:
                         st.session_state.df = None
 
                     # ── Save docs to session state ─────────────────────────
